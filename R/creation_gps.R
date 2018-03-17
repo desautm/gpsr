@@ -6,8 +6,8 @@
 #' @param num_satellites Le nombre de satellites a creer. La valeur par defaut est 4.
 #' @param arrondi Si \code{TRUE}, nous trouvons des positions de satellites entieres. Si \code{FALSE}, nous trouvons des positions
 #'   decimales plus proches de la realite.
-#' @return sat Une matrice dont les lignes representent les satellites et les colonnes les coordonnees
-#'   cartesiennes x, y et z
+#' @return sat_final Une tibble dont les lignes representent les satellites et les colonnes les coordonnees spatiales et temporelles.
+#'   En coordonnees cartesiennes x, y et z, ainsi qu'en temps t.
 #' @export
 
 creation_gps <- function(data,
@@ -31,12 +31,12 @@ creation_gps <- function(data,
   # Conversion en coordonnees cartesiennes
   x <- (Rt+altitude)*cos(latitude)*cos(longitude)
   y <- (Rt+altitude)*cos(latitude)*sin(longitude)
-  z <- (Rt+altitude)*sin(longitude)
-  pos <- matrix(c(x, y, z)/Rt, 1, 3)
+  z <- (Rt+altitude)*sin(latitude)
+  pos <- matrix(c(x/Rt, y/Rt, z/Rt), 1, 3)
 
   # Angle minimal et maximal pour avoir des satellites visibles
   phimax <- pi/2
-  phimin <- asin(Rt/Rs)
+  phimin <- acos((Rt+altitude)/Rs)
 
   # Creation des positions des 4 satellites
   sat <- matrix(0, num_satellites, 3)
@@ -46,6 +46,7 @@ creation_gps <- function(data,
 
   # On s'assure que les satellites ne soient pas coplanaires en calculant le rang de la matrice
   # On place les satellites pour qu'ils soient à plus de 15 degrés l'un de l'autre
+  cutoff <- 1
   while ((Matrix::rankMatrix(D) < 3) && (any(test == FALSE))){
 
     if (arrondi){
@@ -80,12 +81,24 @@ creation_gps <- function(data,
     }
     k <- NULL
 
+    cutoff <- cutoff + 1
+    if (cutoff > 1000) stop("Trop grand nombre d'iterations, arret du programme.")
+
   }
+
+  # Matrices de rotation
+  Ry <- matrix(c(cos(latitude), 0, sin(latitude),
+                 0, 1, 0,
+                 -sin(latitude), 0, cos(latitude)), 3, 3, byrow = TRUE)
+  Rz <- matrix(c(cos(longitude), -sin(longitude), 0,
+                 sin(longitude), cos(longitude), 0,
+                 0, 0, 1), 3, 3, byrow = TRUE)
+  sat_rot <- sat %*% t(Rz %*% Ry)
 
   # Calcul du temps de parcours du signal pour se rendre de l'endroit jusqu'au satellite
   temps_parcours <- matrix(0, num_satellites, 1)
   for (i in (1:num_satellites)){
-    temps_parcours[i] <- Matrix::norm(sat[i, ] - pos)/c
+    temps_parcours[i] <- norm(sat[i, ] - pos, "2")/c
   }
 
   # Temps de reception
@@ -94,7 +107,12 @@ creation_gps <- function(data,
   # Temps d'envoi du signal
   temps_parcours <- temps_reception - temps_parcours
 
-  return(sat)
+  # Creation d'une tibble pour enregistrer les reponses
+  sat_final <- tibble::as.tibble(cbind(sat_rot, temps_parcours))
+  colnames(sat_final) <- c("x", "y", "z", "t")
+
+  return(sat_final)
+
 
 }
 
