@@ -8,6 +8,7 @@
 #'   decimales plus proches de la realite.
 #' @return sat_final Une tibble dont les lignes representent les satellites et les colonnes les coordonnees spatiales et temporelles.
 #'   En coordonnees cartesiennes x, y et z, ainsi qu'en temps t.
+#' @importFrom Matrix rankMatrix
 #' @export
 
 creation_gps <- function(data,
@@ -75,7 +76,7 @@ creation_gps <- function(data,
       if (i == num_satellites) sequence <- NULL
       else sequence <- (i + 1):num_satellites
       for (j in sequence){
-        test[k] <- rad2deg(acos((sat[i, ] %*% sat[j, ])/(1+Rs/Rt)^2)) > 15
+        test[k] <- rad2deg(angle2vec(sat[i, ], sat[j, ])) > 15
         k <- k + 1
       }
     }
@@ -86,19 +87,22 @@ creation_gps <- function(data,
 
   }
 
-  # Matrices de rotation
-  Ry <- matrix(c(cos(latitude), 0, sin(latitude),
-                 0, 1, 0,
-                 -sin(latitude), 0, cos(latitude)), 3, 3, byrow = TRUE)
-  Rz <- matrix(c(cos(longitude), -sin(longitude), 0,
-                 sin(longitude), cos(longitude), 0,
-                 0, 0, 1), 3, 3, byrow = TRUE)
-  sat_rot <- sat %*% t(Rz %*% Ry)
+  if (arrondi) sat_rot <- sat # On ne fait pas de rotation si on veut des valeurs arrondies
+  else {
+    # Matrices de rotation
+    Ry <- matrix(c(cos(latitude), 0, sin(latitude),
+                   0, 1, 0,
+                   -sin(latitude), 0, cos(latitude)), 3, 3, byrow = TRUE)
+    Rz <- matrix(c(cos(longitude), -sin(longitude), 0,
+                   sin(longitude), cos(longitude), 0,
+                   0, 0, 1), 3, 3, byrow = TRUE)
+    sat_rot <- sat %*% t(Rz %*% Ry)
+  }
 
   # Calcul du temps de parcours du signal pour se rendre de l'endroit jusqu'au satellite
   temps_parcours <- matrix(0, num_satellites, 1)
   for (i in (1:num_satellites)){
-    temps_parcours[i] <- norm(sat[i, ] - pos, "2")/c
+    temps_parcours[i] <- norm(sat_rot[i, ] - pos, "2")/c
   }
 
   # Temps de reception
@@ -108,11 +112,11 @@ creation_gps <- function(data,
   temps_parcours <- temps_reception - temps_parcours
 
   # Creation d'une tibble pour enregistrer les reponses
-  sat_final <- tibble::as.tibble(cbind(sat_rot, temps_parcours))
-  colnames(sat_final) <- c("x", "y", "z", "t")
+  sat_final <- cbind(sat_rot, temps_parcours)
+  #sat_final <- tibble::as.tibble(cbind(sat_rot, temps_parcours))
+  #colnames(sat_final) <- c("x", "y", "z", "t")
 
   return(sat_final)
-
 
 }
 
