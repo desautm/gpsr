@@ -1,5 +1,5 @@
 ---
-title: "Instructions aux étudiantes et étudiants"
+title: "Introduction au GPS"
 author: "Marc-André Désautels"
 date: "`r Sys.Date()`"
 output:
@@ -14,6 +14,12 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+options(digits = 15)
+set.seed(12345)
+library(knitr)
+library(gpsr)
+library(linalgr)
+library(ggmap)
 ```
 
 # Qu'est-ce que le GPS?
@@ -79,18 +85,32 @@ v_c &= \dfrac{c}{1000R_t}
 
 Dans ce devoir, vous vous trouvez à un endroit célèbre sur la planète Terre et votre GPS reçoit simultanément 4 signaux provenant de 4 satellites différents. Ces 4 satellites vous envoient leur position en coordonnées cartésiennes et le temps en millisecondes de l'envoi du signal. Un exemple vous est donné dans la table suivante. Les nombres sont factices pour qu'il soit plus aisé de travailler avec ceux-ci, mais ils ne sont pas complètement irréalistes.
 
-\[
-\begin{array}{ccc}
-\hline
-\text{Satellite} & \text{Position $xyz$} & \text{Temps d'envoi du signal} \\
-\hline
-1 & (1,2,0) &  19.9 \\
-2 & (2,0,2) & 2.4 \\
-3 & (1,1,1) & 32.6 \\
-4 & (2,1,0) & 19.9 \\
-\hline
-\end{array}
-\]
+> Les nombres se trouvant dans le tableau ci-dessous ne **sont pas** ceux que vous utiliserez pour ce laboratoire. Vous allez recevoir vos propres données qui seront distribuées par votre enseignante ou votre enseignant.
+
+```{r donnees-factices-gps, echo = FALSE}
+cstjean <- tibble::tibble(nom = "cegep-saint-jean-sur-richelieu",
+                          latitude = 45+17/60+51.3/3600,
+                          longitude = -(73+16/60+7.5/3600),
+                          altitude = 0)
+Rt <- 6378137 
+c <- 299792458/(Rt*1000)
+gps <- creation_gps(cstjean,1,arrondi = TRUE)
+kable(gps, align = "c", digits = 6)
+```
+
+
+<!-- \[ -->
+<!-- \begin{array}{ccc} -->
+<!-- \hline -->
+<!-- \text{Satellite} & \text{Position $xyz$} & \text{Temps d'envoi du signal} \\ -->
+<!-- \hline -->
+<!-- 1 & (1,2,0) &  19.9 \\ -->
+<!-- 2 & (2,0,2) & 2.4 \\ -->
+<!-- 3 & (1,1,1) & 32.6 \\ -->
+<!-- 4 & (2,1,0) & 19.9 \\ -->
+<!-- \hline -->
+<!-- \end{array} -->
+<!-- \] -->
 
 A FAIRE INSERER UNE IMAGE...
 
@@ -98,7 +118,7 @@ Soit $(x,y,z)$ la position du GPS sur la Terre et $t$ le temps où les signaux a
 
 \[
 \begin{aligned}
-d_1 &= v_c(t-19.9)
+d_1 &= v_c(t-`r round(gps[1,5], digits = 6)`)
 \end{aligned}
 \]
 
@@ -106,7 +126,7 @@ Si nous utilisons la distance euclidienne, nous avons:
 
 \[
 \begin{aligned}
-d_1 &= \sqrt{(x-1)^2+(y-2)^2+(z-0)^2}
+d_1 &= \sqrt{(x-`r gps[1,2]`)^2+(y-`r gps[1,3]`)^2+(z-`r gps[1,4]`)^2}
 \end{aligned}
 \]
 
@@ -114,21 +134,199 @@ En combinant ces deux équations, nous avons:
 
 \[
 \begin{aligned}
-\sqrt{(x-1)^2+(y-2)^2+(z-0)^2} &= v_c(t-19.9) \\
-(x-1)^2+(y-2)^2+(z-0)^2 &= v_c^2(t-19.9)^2 \label{eq:equation1}
+\sqrt{
+(x `r if (gps[1,2]>0) -gps[1,2] else if (gps[1,2]<0) +abs(gps[1,2]) else '- 0'`)^2
++(y `r if (gps[1,3]>0) - gps[1,3] else if (gps[1,3]<0) +abs(gps[1,3]) else '- 0'`)^2
++(z `r if (gps[1,4]>0) -gps[1,4] else if (gps[1,4]<0) +abs(gps[1,4]) else '- 0'`)^2
+}
+&=
+v_c(t-`r round(gps[1,5], digits = 6)`) \\
+(x `r if (gps[1,2]>0) -gps[1,2] else if (gps[1,2]<0) +abs(gps[1,2]) else '- 0'`)^2
++(y `r if (gps[1,3]>0) - gps[1,3] else if (gps[1,3]<0) +abs(gps[1,3]) else '- 0'`)^2
++(z `r if (gps[1,4]>0) -gps[1,4] else if (gps[1,4]<0) +abs(gps[1,4]) else '- 0'`)^2
+&=
+v_c^2(t-`r round(gps[1,5], digits = 6)`)^2
 \end{aligned}
 \]
 
-Si nous développons et réarrangons les termes pour que les variables linéaires soient à gauche du symbole d'égalité, nous obtenons:
+Si nous développons et réarrangons les termes pour que les variables linéaires soient à gauche du symbole d'égalité  (en utilisant le fait que $v_c \approx `r round(c, digits = 6)`$), nous obtenons:
+
+```{r creation-sel, echo = FALSE}
+A <- matrix(0, 3, 4)
+B <- matrix(0, 3, 1)
+
+for (i in (1:3)){
+  A[i, (1:3)] <- 2*(gps[i+1, (2:4)] - gps[1, (2:4)])
+  A[i, 4] <- -2*c^2*(gps[i+1, 5] - gps[1, 5])
+  B[i] <- sum(gps[(i+1), (2:4)]^2 - gps[1, (2:4)]^2)-c^2*(gps[(i+1), 5]^2 - gps[1, 5]^2)
+}
+
+R <- rref(A,B, verbose = FALSE, digits = 15)
+K <- R$A[, 4]
+L <- R$B
+
+xf <- gps[4, (2:4)]
+tf <- gps[4, 5]
+
+# Coefficient en t^2
+a <- sum(K^2)-c^2
+# Coefficient en t
+b <- sum(-2*(L-xf)*K)+2*c^2*tf
+# Coefficient constant
+c <- sum((L-xf)^2)-c^2*tf^2
+
+# Resolution de la quadratique
+delta <- b^2 - 4*a*c
+t1 <- (-b + sqrt(delta))/(2*a)
+t2 <- (-b - sqrt(delta))/(2*a)
+
+pos1 <- L - K*t1
+pos2 <- L - K*t2
+pos <- matrix(c(pos1, pos2), 2, 3, byrow = TRUE)
+colnames(pos) <- c("x", "y", "z")
+
+l1 <- norm(pos[1, ], "2")
+l2 <- norm(pos[2, ], "2")
+
+id <- which.min(c(abs(l1-1), abs(l2-1)))
+
+if (id == 1) final <- pos[1,] else final <- pos[2,]
+
+r <- norm(final, "2")
+latitude <- rad2deg(asin(final[3]/r))
+longitude <- rad2deg(atan2(final[2],final[1]))
+
+A <- round(A, digits = 6)
+B <- round(B, digits = 6)
+K <- round(K, digits = 6)
+L <- round(L, digits = 6)
+```
 
 \[
 \begin{aligned}
-2x+4y+0z-2(0.047)^2(19.9)t &= 1^2+2^2-0.047^2(19.9)^2+x^2+y^2+z^2-0.047^2t^2 \\
-2x+4y+0z-0.0879182t &= 4.12521391+x^2+y^2+z^2-0.047^2t^2 
+`r if (gps[1,2]>=0) 2*gps[1,2] else -2*abs(gps[1,2])` x
+`r if (gps[1,3]>0) paste0("+",2*gps[1,3]) else if (gps[1,3]<0) -2*abs(gps[1,3]) else '+ 0'` y
+`r if (gps[1,4]>0) paste0("+",2*gps[1,4]) else if (gps[1,4]<0) -2*abs(gps[1,4]) else '+ 0'` z
+`r if (gps[1,5]>0) -round(2*gps[1,5]*c^2, digits = 6) else if (gps[1,5]<0) paste0("+",abs(round(2*gps[1,5]*c^2, digits = 6)))` t
+&=
+`r round(gps[1,2]^2+gps[1,3]^2+gps[1,4]^2-gps[1,5]^2*c^2, digits = 6)`
++x^2+y^2+z^2-v_c^2 t^2
 \end{aligned}
 \]
 
-> Pour le reste du  devoir, vous devez utiliser les informations que votre enseignant vous a distribué concernant vos satellites. De plus, vous devrez utiliser le logiciel Maxima pour faire ce devoir. Écrivez vos réponses dans votre feuille MAXIMA en utilisant la commande `Cell` $\rightarrow$ `Insert Text Cell`.
+Nous pouvons faire de même pour les trois autres satellites.
+
+\[
+\begin{aligned}
+`r if (gps[2,2]>=0) 2*gps[2, 2] else -2*abs(gps[2, 2])` x
+`r if (gps[2,3]>0) paste0("+",2*gps[2, 3]) else if (gps[2, 3]<0) -2*abs(gps[2, 3]) else '+ 0'` y
+`r if (gps[2,4]>0) paste0("+",2*gps[2, 4]) else if (gps[2, 4]<0) -2*abs(gps[2, 4]) else '+ 0'` z
+`r if (gps[2,5]>0) -round(2*gps[2, 5]*c^2, digits = 6) else if (gps[2, 5]<0) paste0("+",abs(round(2*gps[2, 5]*c^2, digits = 6)))` t
+&=
+`r round(gps[2, 2]^2+gps[2, 3]^2+gps[2, 4]^2-gps[2, 5]^2*c^2, digits = 6)`
++x^2+y^2+z^2-v_c^2 t^2 \\
+`r if (gps[3, 2]>=0) 2*gps[3,  2] else -2*abs(gps[3,  2])` x
+`r if (gps[3, 3]>0) paste0("+",2*gps[3,  3]) else if (gps[3,  3]<0) -2*abs(gps[3,  3]) else '+ 0'` y
+`r if (gps[3, 4]>0) paste0("+",2*gps[3,  4]) else if (gps[3,  4]<0) -2*abs(gps[3,  4]) else '+ 0'` z
+`r if (gps[3, 5]>0) -round(2*gps[3,  5]*c^2, digits = 6) else if (gps[3,  5]<0) paste0("+",abs(round(2*gps[3,  5]*c^2, digits = 6)))` t
+&=
+`r round(gps[3,  2]^2+gps[3,  3]^2+gps[3,  4]^2-gps[3,  5]^2*c^2, digits = 6)`
++x^2+y^2+z^2-v_c^2 t^2 \\
+`r if (gps[4, 2]>=0) 2*gps[4,  2] else -2*abs(gps[4,  2])` x
+`r if (gps[4, 3]>0) paste0("+",2*gps[4,  3]) else if (gps[4,  3]<0) -2*abs(gps[4,  3]) else '+ 0'` y
+`r if (gps[4, 4]>0) paste0("+",2*gps[4,  4]) else if (gps[4,  4]<0) -2*abs(gps[4,  4]) else '+ 0'` z
+`r if (gps[4, 5]>0) -round(2*gps[4,  5]*c^2, digits = 6) else if (gps[4,  5]<0) paste0("+",abs(round(2*gps[4,  5]*c^2, digits = 6)))` t
+&=
+`r round(gps[4,  2]^2+gps[4,  3]^2+gps[4,  4]^2-gps[4,  5]^2*c^2, digits = 6)`
++x^2+y^2+z^2-v_c^2 t^2
+\end{aligned}
+\]
+
+Remarquons que les termes quadratiques des quatre équations sont tous identiques. Nous pouvons donc les faire disparaître en faisant la différence entre les équations 2, 3 et 4 avec l'équation 1. Nous voulons donc trouver $E_2-E_1$, $E_3-E_1$ et $E_4-E_1$. Nous obtenons.
+
+\[
+\begin{aligned}
+`r A[1,1]` x
+`r if (A[1,2]>0) paste0("+",A[1,2]) else if (A[1,2]<0) paste0("-",abs(A[1,2])) else '+ 0'` y
+`r if (A[1,3]>0) paste0("+",A[1,3]) else if (A[1,3]<0) paste0("-",abs(A[1,3])) else '+ 0'` z
+`r if (A[1,4]>0) paste0("+",A[1,4]) else if (A[1,4]<0) paste0("-",abs(A[1,4])) else '+ 0'` t
+&=
+`r B[1,1]` \\
+`r A[2,1]` x
+`r if (A[2,2]>0) paste0("+",A[2,2]) else if (A[2,2]<0) paste0("-",abs(A[2,2])) else '+ 0'` y
+`r if (A[2,3]>0) paste0("+",A[2,3]) else if (A[2,3]<0) paste0("-",abs(A[2,3])) else '+ 0'` z
+`r if (A[2,4]>0) paste0("+",A[2,4]) else if (A[2,4]<0) paste0("-",abs(A[2,4])) else '+ 0'` t
+&=
+`r B[2,1]` \\
+`r A[1,1]` x
+`r if (A[3,2]>0) paste0("+",A[3,2]) else if (A[3,2]<0) paste0("-",abs(A[3,2])) else '+ 0'` y
+`r if (A[3,3]>0) paste0("+",A[3,3]) else if (A[3,3]<0) paste0("-",abs(A[3,3])) else '+ 0'` z
+`r if (A[3,4]>0) paste0("+",A[3,4]) else if (A[3,4]<0) paste0("-",abs(A[3,4])) else '+ 0'` t
+&=
+`r B[3,1]`
+\end{aligned}
+\]
+
+Nous avons donc obtenu un système d'équations linéaires de trois équations et quatre inconnues. La solution de ce système (trouvée par `Maxima`) est:
+
+\[
+\begin{aligned}
+x &= `r K[1]`t `r if (L[1]>0) paste0("+",L[1]) else if (L[1]<0) paste0("-",abs(L[1]))` \\
+y &= `r K[2]`t `r if (L[2]>0) paste0("+",L[2]) else if (L[2]<0) paste0("-",abs(L[2]))` \\
+z &= `r K[3]`t `r if (L[3]>0) paste0("+",L[3]) else if (L[3]<0) paste0("-",abs(L[3]))`
+\end{aligned}
+\]
+
+Pour être en mesure de trouver la valeur du paramètre $t$, nous allons remplacer les équations précédentes dans la première équation ($E_1$) que nous avons trouvé précédemment. Nous avons donc:
+
+\[
+\begin{aligned}
+(x-`r gps[1,2]`)^2+(y-`r gps[1,3]`)^2+(z-`r gps[1,4]`)^2 &= v_c^2(t-`r round(gps[1,5], digits = 6)`)^2 \\
+(`r K[1]`t `r if (L[1]>0) paste0("+",L[1]) else if (L[1]<0) paste0("-",abs(L[1]))`-`r gps[1,2]`)^2
++(`r K[2]`t `r if (L[2]>0) paste0("+",L[2]) else if (L[2]<0) paste0("-",abs(L[2]))`-`r gps[1,3]`)^2
++(`r K[3]`t `r if (L[3]>0) paste0("+",L[3]) else if (L[3]<0) paste0("-",abs(L[3]))`-`r gps[1,4]`)^2 
+&= v_c^2(t-`r round(gps[1,5], digits = 6)`)^2 \\
+\end{aligned}
+\]
+
+Nous pouvons résoudre l'équation quadratique précédente à l'aide de `Maxima`. Nous obtenons deux valeurs de $t$.
+
+\[
+\begin{aligned}
+t_1 &= `r t1` \\
+t_2 &= `r t2`
+\end{aligned}
+\]
+
+En remplaçant dans les équations trouvées pour $x$, $y$ et $z$, nous obtenons deux positions possibles.
+
+```{r, echo=FALSE}
+kable(pos, align = "c", digits = 6)
+```
+
+En calculant les normes des deux vecteurs, nous obtenons pour le premier `r round(l1, digits = 6)` et pour le second `r round(l2, digits = 6)`. Puisque la `r if (id == 1) paste("première") else paste("seconde")` est plus près de 1, le `r if (id == 1) paste("premier") else paste("second")` vecteur correspond à la position de l'endroit où nous nous trouvons.
+
+Pour convertir ces coordonnées cartésiennes en coordonnées géodétiques, c'est-à-dire en latitude et longitude, nous devons utiliser les formules suivantes:
+
+\[
+\begin{aligned}
+r &= \sqrt{x^2+y^2+z^2} \\
+\text{latitude} &= \text{Arcsin}\left(\dfrac{z}{r}\right) \\
+\text{longitude} &= \text{Arctan}\left(\dfrac{y}{x}\right)
+\end{aligned}
+\]
+
+Nous nous trouvons donc à la latitude $`r round(latitude, digits = 6)`^{\circ}$ et à la longitude $`r round(longitude, digits = 6)`^{\circ}$. En affichant cet endroit sur une carte, nous obtenons:
+
+```{r ggmap, echo=FALSE, fig.height=5, fig.width=5, fig.align='center', message=FALSE}
+where <- c(longitude, latitude)
+ggmap(get_map(where, zoom = 15))+
+  geom_point(aes(x = longitude, y = latitude), col = "red", size = 3)
+```
+
+Nous sommes au cégep de Saint-Jean-sur-Richelieu.
+
+> Pour le reste du  devoir, vous devez utiliser les informations que votre enseignant vous a distribué concernant vos satellites. De plus, vous devrez utiliser le logiciel Maxima pour faire ce devoir. Écrivez vos réponses dans votre feuille Maxima en utilisant la commande `Cell` $\rightarrow$ `Insert Text Cell`.
 
 ## Préalables
 

@@ -4,12 +4,13 @@ author: "Marc-André Désautels"
 date: "19 mars 2018"
 output:
   html_document: default
-  pdf_document: default
   word_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+options(digits = 15)
 library(gpsr)
 library(linalgr)
 library(knitr)
@@ -19,6 +20,13 @@ library(knitr)
 data <- readr::read_csv("data/merveilles.csv")
 num_merveille <- sample(1:nrow(data), 1)
 sat <- creation_gps(data, num_merveille)
+
+set.seed(12345)
+cstjean <- tibble::tibble(nom = "cegep-saint-jean-sur-richelieu",
+                          latitude = 45+17/60+51.3/3600,
+                          longitude = -(73+16/60+7.5/3600),
+                          altitude = 0)
+sat <- creation_gps(cstjean, 1, arrondi = TRUE)
 ```
 
 ## Question
@@ -40,16 +48,16 @@ A <- matrix(0, nrow(sat)-1, 4)
 B <- matrix(0, nrow(sat)-1, 1)
 
 for (i in (1:(nrow(sat)-1))){
-  A[i, (1:3)] <- 2*(sat[i+1, (1:3)] - sat[1, (1:3)])
-  A[i, 4] <- -2*c^2*(sat[i+1, 4] - sat[1, 4])
-  B[i] <- sum(sat[(i+1), (1:3)]^2 - sat[1, (1:3)]^2)-c^2*(sat[(i+1), 4]^2 - sat[1, 4]^2)
+  A[i, (1:3)] <- 2*(sat[i+1, (2:4)] - sat[1, (2:4)])
+  A[i, 4] <- -2*c^2*(sat[i+1, 5] - sat[1, 5])
+  B[i] <- sum(sat[(i+1), (2:4)]^2 - sat[1, (2:4)]^2)-c^2*(sat[(i+1), 5]^2 - sat[1, 5]^2)
 }
 
 R <- rref(A,B, verbose = FALSE, digits = 15)
 K <- R$A[, 4]
 L <- R$B
-xf <- sat[nrow(sat), (1:3)]
-tf <- sat[nrow(sat), 4]
+xf <- sat[nrow(sat), (2:4)]
+tf <- sat[nrow(sat), 5]
 
 # Coefficient en t^2
 a <- sum(K^2)-c^2
@@ -75,14 +83,45 @@ id <- which.min(c(abs(l1-1), abs(l2-1)))
 if (id == 1) final <- pos[1,] else final <- pos[2,]
 
 r <- norm(final, "2")
-r
 latitude <- rad2deg(asin(final[3]/r))
 longitude <- rad2deg(atan2(final[2],final[1]))
-latitude
-longitude
-
-data[num_merveille, 1:3]
 
 ```
 
 
+# Créer plusieurs problèmes
+
+```{r creation-devoir}
+N <- 100 # Nombre de problemes differents
+num_satellites <- 4
+donnees <- lapply(1:N, function(x) matrix(0, num_satellites, 5))
+sols <- character(length = N)
+for (i in (1:N)){
+  numero <- sample(1:nrow(data), 1)
+  donnees[[i]] <- creation_gps(data, numero, num_satellites = num_satellites)
+  sols[i] <- data[numero, ]$nom
+}
+```
+
+\newpage
+
+```{r, results='asis', echo=FALSE}
+for (i in (1:N)){
+  cat(c("Exercice ", i, "."))
+  print(kable(donnees[[i]], align = "c", digits = c(8, 8, 8, 6)))
+  cat("\n")
+  if ((i %% 5) == 0) cat("\\newpage\n")
+}
+```
+
+\newpage
+
+# Solutions
+
+```{r, results = "asis", echo=FALSE}
+for (i in (1:N)){
+  cat(c("Exercice ", i, ". "))
+  cat(sols[i])
+  cat("\n\n")
+}
+```

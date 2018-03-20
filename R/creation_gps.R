@@ -111,10 +111,10 @@ creation_gps <- function(data,
   # Temps d'envoi du signal
   temps_parcours <- temps_reception - temps_parcours
 
-  # Creation d'une tibble pour enregistrer les reponses
-  sat_final <- cbind(sat_rot, temps_parcours)
+  # Creation d'une matrice pour enregistrer les reponses
+  sat_final <- cbind((1:num_satellites), sat_rot, temps_parcours)
   #sat_final <- tibble::as.tibble(cbind(sat_rot, temps_parcours))
-  #colnames(sat_final) <- c("x", "y", "z", "t")
+  colnames(sat_final) <- c("Satellite", "x", "y", "z", "t")
 
   return(sat_final)
 
