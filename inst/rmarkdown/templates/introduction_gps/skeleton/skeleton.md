@@ -154,6 +154,8 @@ Si nous développons et réarrangons les termes pour que les variables linéaire
 \end{aligned}
 \]
 
+Nous appelerons cette équation $E_1$.
+
 Nous pouvons faire de même pour les trois autres satellites.
 
 \[
@@ -182,7 +184,9 @@ Nous pouvons faire de même pour les trois autres satellites.
 \end{aligned}
 \]
 
-Remarquons que les termes quadratiques des quatre équations sont tous identiques. Nous pouvons donc les faire disparaître en faisant la différence entre les équations 2, 3 et 4 avec l'équation 1. Nous voulons donc trouver $E_2-E_1$, $E_3-E_1$ et $E_4-E_1$. Nous obtenons.
+Nous appelerons ces équations $E_2$, $E_3$ et $E_4$.
+
+Remarquons que les termes quadratiques des quatre équations sont tous identiques. Nous pouvons donc les faire disparaître en faisant la différence entre les équations 2, 3 et 4 avec l'équation 1. Nous voulons donc trouver $L_1 = E_2-E_1$, $L_2 = E_3-E_1$ et $L_3 = E_4-E_1$. Nous obtenons.
 
 \[
 \begin{aligned}
@@ -264,14 +268,19 @@ Nous nous trouvons donc à la latitude $45.297583^{\circ}$ et à la longitude $-
 
 Nous sommes au cégep de Saint-Jean-sur-Richelieu.
 
-> Pour le reste du  devoir, vous devez utiliser les informations que votre enseignant vous a distribué concernant vos satellites. De plus, vous devrez utiliser le logiciel Maxima pour faire ce devoir. Écrivez vos réponses dans votre feuille Maxima en utilisant la commande `Cell` $\rightarrow$ `Insert Text Cell`.
+# Laboratoire en `Maxima`
+
+> Pour le reste du  devoir, vous devez utiliser les informations que votre enseignant vous a distribué concernant vos satellites. De plus, vous devrez utiliser le logiciel `Maxima` pour faire ce devoir. Votre enseignant vous distribuera un fichier `Maxima` dans lequel vous pourrez répondre.
+
+> Écrivez vos réponses dans votre feuille Maxima en utilisant la commande `Cell` $\rightarrow$ `Insert Text Cell`.
 
 ## Préalables
 
-1. Définir dans maxima $c$, $R_t$ et $v_c$. Pour définir un élément dans Maxima effectuer la commande `:`. Par exemple, `c:299792458` ou `E:x^2-4=0`.
+1. Définir dans `Maxima` les constantes $c$, $R_t$ et $v_c$. Pour définir un élément dans `Maxima` effectuer la commande `:`. Par exemple, `c:299792458` ou `E:x^2-4=0`. **N'utilisez pas des valeurs arrondies pour ces constantes (par exemple $v_c \approx 0.047$) car vous n'obtiendrez pas la bonne localisation.
 
+## Questions sur les satellites
 
-## Questions
+> Pour les questions suivantes, vous n'utilisez que les informations données par votre enseignant. Vous n'avez pas à connaître votre localisation finale pour y répondre.
 
 2. Trouvez l'angle (en degrés) formé par votre satellite 1, le centre de la Terre et votre satellite 2.
 
@@ -279,13 +288,15 @@ Nous sommes au cégep de Saint-Jean-sur-Richelieu.
 
 4. Trouvez l'angle (en degrés) formé par votre satellite 3, le centre de la Terre et le plan de l'équateur.
 
-> Pour répondre aux questions suivantes, nous vous invitons à faire les étapes suivantes dans MAXIMA.
+## Questions sur votre position
 
-- À partir de vos données, trouvez $4$ équations similaires à l'équation~(\ref{eq:equation1}) que vous noterez (E1), (E2), (E3) et (E4). Écrivez toutes les équations dans le même format, c'est-à-dire développez vos équations, comme à l'équation~(\ref{eq:equation1}).
-- Vous devriez remarquer que les 4 équations ont toutes le même terme quadratique, $x^2+y^2+z^2-v_c^2t^2$. Utilisez l'équation (E1) pour éliminer le terme quadratique, créant ainsi un système d'équations linéaires de trois équations (L1), (L2) et (L3) à 4 inconnues $x$, $y$, $z$ et $t$. Vous pouvez le faire en soustrayant l'équation (E1) de chaque autre équation, c'est-à-dire (L1)=(E2)-(E1), (L2)=(E3)-(E1) et (L3)=(E4)-(E1).
-- Résolvez le système d'équations linéaires composé des équations (L1), (L2) et (L3) à l'aide du logiciel Maxima. Notez que vous avez 3 équations et 4 inconnues. Choisissez la variable appropriée comme paramètre de votre ensemble solution. 
+> Pour être en mesure de trouver votre position sur la Terre, nous vous invitons à utiliser les explications données plus tôt dans ce document et à suivre les étapes suivantes.
+
+- À partir de vos données, trouvez 4 équations similaires à celles présentées plus haut que vous noterez $E_1$, $E_2$, $E_3$ et $E_4$. Écrivez toutes les équations dans le même format, c'est-à-dire développez vos équations.
+- Vous devriez remarquer que les 4 équations ont toutes le même terme quadratique, $x^2+y^2+z^2-v_c^2t^2$. Utilisez l'équation $E_1$ pour éliminer le terme quadratique, créant ainsi un système d'équations linéaires de trois équations $L_1$, $L_2$ et $L_3$ à 4 inconnues $x$, $y$, $z$ et $t$. Vous pouvez le faire en soustrayant l'équation $E_1$ de chaque autre équation, c'est-à-dire $L_1=E_2-E_1$, $L_2=E_3-E_1$ et $L_3=E_4-E_1$.
+- Résolvez le système d'équations linéaires composé des équations $L_1$, $L_2$ et $L_3$ à l'aide du logiciel `Maxima`. Notez que vous avez 3 équations et 4 inconnues. Choisissez la variable appropriée comme paramètre de votre ensemble solution. 
 (Remarque: Il pourrait être utile d'utiliser les commandes `expand` et `float`.)
-- Définir les fonctions obtenues de votre ensemble solution à l'aide de la commande `:=`. Remplacez les fonctions dans l'équation (E1) et résolvez pour la variable indépendante (le paramètre choisi précédemment). Vous devriez obtenir une équation quadratique et vous devriez obtenir deux solutions. Déterminez quelle solution est la bonne.
+- Vous obtenez des fonctions pour les variables $x$, $y$ et $z$ avec un paramètre. Définir les fonctions obtenues de votre ensemble solution à l'aide de la commande `:=`. Remplacez les fonctions dans l'équation $E_1$ et résolvez pour la variable indépendante (le paramètre choisi précédemment). Vous devriez obtenir une équation quadratique et vous devriez obtenir deux solutions. Déterminez quelle solution est la bonne.
 
 5. Donnez la localisation de votre GPS en coordonnées cartésiennes. Vous devez donner votre réponse en mètre en utilisant le fait que le rayon moyen de la Terre est d'environ $6\ 378\ 137$ m.
 
