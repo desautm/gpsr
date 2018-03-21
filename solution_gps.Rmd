@@ -3,7 +3,9 @@ title: "Solution GPS"
 author: "Marc-André Désautels"
 date: "19 mars 2018"
 output:
-  html_document: default
+  html_document: 
+    toc: yes
+    toc_float: yes
   word_document: default
   pdf_document: default
 ---
@@ -20,13 +22,6 @@ library(knitr)
 data <- readr::read_csv("data/merveilles.csv")
 num_merveille <- sample(1:nrow(data), 1)
 sat <- creation_gps(data, num_merveille)
-
-set.seed(12345)
-cstjean <- tibble::tibble(nom = "cegep-saint-jean-sur-richelieu",
-                          latitude = 45+17/60+51.3/3600,
-                          longitude = -(73+16/60+7.5/3600),
-                          altitude = 0)
-sat <- creation_gps(cstjean, 1, arrondi = TRUE)
 ```
 
 ## Question
@@ -107,7 +102,7 @@ for (i in (1:N)){
 
 ```{r, results='asis', echo=FALSE}
 for (i in (1:N)){
-  cat(c("Exercice ", i, "."))
+  cat(c("###  Exercice ", i, "."))
   print(kable(donnees[[i]], align = "c", digits = c(8, 8, 8, 6)))
   cat("\n")
   if ((i %% 5) == 0) cat("\\newpage\n")

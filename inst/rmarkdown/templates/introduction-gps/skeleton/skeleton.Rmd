@@ -1,18 +1,34 @@
 ---
 title: "Introduction au GPS"
 author: "Marc-André Désautels"
-date: "2018-03-20"
+date: "`r Sys.Date()`"
 output:
   html_document:
     keep_md: yes
     toc: yes
-  word_document:
-    toc: yes
   pdf_document:
+    toc: yes
+  word_document:
     toc: yes
 ---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(digits = 15)
+set.seed(12345)
 
+# Vous pouvez ces librairies avec les commandes suivantes:
+# install.packages("knitr")
+# install.packages("ggmap")
+library(knitr)
+library(ggmap)
+
+# Vous pouvez installer ces librairies avec devtools:
+# devtools::install_github("desautm/gpsr")
+# devtools::install_github("desautm/linalgr")
+library(gpsr)
+library(linalgr)
+```
 
 # Qu'est-ce que le GPS?
 
@@ -26,7 +42,7 @@ Un minimum de 24 satellites bougent sur des orbites autour de la Terre à une al
 
 Les signaux sont captés à l'aide d'un récepteur. Le récepteur calcule sa position sur la terre. Le principe est que le récepteur mesure les temps de parcours des signaux depuis les satellites jusqu'à lui. Étant donné que chaque signal voyage à la vitesse de la lumière, cela permet de calculer la distance entre le récepteur et chacun des satellites. La donnée de la distance $d_1$ entre un satellite $S_1$ et le récepteur permet de conclure que le récepteur se trouve sur une sphère de rayon $d_1$ centrée au satellite $S_1$. Si on connaît la distance $d_2$ entre le récepteur et un deuxième satellite $S_2$, on sait que le récepteur est aussi sur la sphère de rayon $d_2$ centrée en $S_2$. L'intersection de ces deux sphères est un cercle $C$.
 
-A FAIRE INSERER UNE IMAGE...
+![](figs/intersection-deux-cercles.png)
 
 Enfin, si on connaît la distance $d_3$ entre le récepteur et un troisième satellite $S_3$, alors on sait que le récepteur est sur la sphère de rayon $d_3$ centrée en $S_3$. L'intersection de cette sphère avec le cercle $C$ consiste en deux points. L'un de ces deux points se trouve toujours loin de la surface de la Terre (un avion est au maximum à 12 kilomètres d'altitude, ce qui est considéré proche) et est éliminé parce qu'irréaliste. Donc, en mesurant les temps de parcours de trois signaux depuis 3 satellites jusqu'à lui le récepteur peut calculer sa position (c'est-à-dire longitude, latitude et altitude).
 
@@ -56,7 +72,7 @@ Ce système admet encore deux solutions dont l'une est de nouveau éliminée par
 
 Pour simplifier le problème du GPS, nous utiliserons les coordonnées cartésiennes $xyz$, c'est-à-dire un système de coordonnées avec la Terre centrée à l'origine, l'axe des $z$ positifs pointant vers le pôle nord, et les unités de mesure étant le rayon moyen de la Terre. 
 
-A FAIRE INSERER UNE IMAGE...
+![](figs/referentiel.png)
 
 Nous allons également supposer que n'importe quel point sur la surface de la Terre satisfait à l'équation $x^2+y^2+z^2=1$. Le temps sera mesuré en millisecondes (un millième de seconde ou alors $10^{-3}$ seconde). Nous aurons besoin des constantes suivantes pour résoudre le problème:
 
@@ -75,17 +91,20 @@ v_c &= \dfrac{c}{1000R_t}
 \end{aligned}
 \]
 
-Dans ce devoir, vous vous trouvez à un endroit célèbre sur la planète Terre et votre GPS reçoit simultanément 4 signaux provenant de 4 satellites différents. Ces 4 satellites vous envoient leur position en coordonnées cartésiennes et le temps en millisecondes de l'envoi du signal. Un exemple vous est donné dans la table suivante. Les nombres sont factices pour qu'il soit plus aisé de travailler avec ceux-ci, mais ils ne sont pas complètement irréalistes.
+Dans ce devoir, vous vous trouvez à un endroit célèbre sur la planète Terre et votre GPS reçoit simultanément 4 signaux provenant de 4 satellites différents. Ces 4 satellites vous envoient leur position en coordonnées cartésiennes et le temps en millisecondes de **l'envoi** du signal. Un exemple vous est donné dans la table suivante. Les nombres sont factices pour qu'il soit plus aisé de travailler avec ceux-ci, mais ils ne sont pas complètement irréalistes.
 
 > Les nombres se trouvant dans le tableau ci-dessous ne **sont pas** ceux que vous utiliserez pour ce laboratoire. Vous allez recevoir vos propres données qui seront distribuées par votre enseignante ou votre enseignant.
 
-
- Satellite    x    y     z         t      
------------  ---  ----  ----  ------------
-     1        2    0     2     103.538332 
-     2        3    -2    3     70.815246  
-     3        2    -1    -3    64.737496  
-     4        3    0     -2    68.627982  
+```{r donnees-factices-gps, echo = FALSE}
+cstjean <- tibble::tibble(nom = "cegep-saint-jean-sur-richelieu",
+                          latitude = 45+17/60+51.3/3600,
+                          longitude = -(73+16/60+7.5/3600),
+                          altitude = 0)
+Rt <- 6378137 
+c <- 299792458/(Rt*1000)
+gps <- creation_gps(cstjean,1,arrondi = TRUE)
+kable(gps, align = "c", digits = 6)
+```
 
 
 <!-- \[ -->
@@ -101,13 +120,13 @@ Dans ce devoir, vous vous trouvez à un endroit célèbre sur la planète Terre 
 <!-- \end{array} -->
 <!-- \] -->
 
-A FAIRE INSERER UNE IMAGE...
+![](figs/referentiel-satellites.png)
 
 Soit $(x,y,z)$ la position du GPS sur la Terre et $t$ le temps où les signaux arrivent au GPS. Soit $d_i$ la distance entre le récepteur GPS et le satellite $i$. Pour le satellite $1$, nous pouvons mesurer $d_1$ en calculant la distance parcourue par le signal entre le moment où il a été émis et le moment où il a été reçu. Nous avons:
 
 \[
 \begin{aligned}
-d_1 &= v_c(t-103.538332)
+d_1 &= v_c(t-`r round(gps[1,5], digits = 6)`)
 \end{aligned}
 \]
 
@@ -115,7 +134,7 @@ Si nous utilisons la distance euclidienne, nous avons:
 
 \[
 \begin{aligned}
-d_1 &= \sqrt{(x-2)^2+(y-0)^2+(z-2)^2}
+d_1 &= \sqrt{(x-`r gps[1,2]`)^2+(y-`r gps[1,3]`)^2+(z-`r gps[1,4]`)^2}
 \end{aligned}
 \]
 
@@ -124,32 +143,81 @@ En combinant ces deux équations, nous avons:
 \[
 \begin{aligned}
 \sqrt{
-(x -2)^2
-+(y - 0)^2
-+(z -2)^2
+(x `r if (gps[1,2]>0) -gps[1,2] else if (gps[1,2]<0) +abs(gps[1,2]) else '- 0'`)^2
++(y `r if (gps[1,3]>0) - gps[1,3] else if (gps[1,3]<0) +abs(gps[1,3]) else '- 0'`)^2
++(z `r if (gps[1,4]>0) -gps[1,4] else if (gps[1,4]<0) +abs(gps[1,4]) else '- 0'`)^2
 }
 &=
-v_c(t-103.538332) \\
-(x -2)^2
-+(y - 0)^2
-+(z -2)^2
+v_c(t-`r round(gps[1,5], digits = 6)`) \\
+(x `r if (gps[1,2]>0) -gps[1,2] else if (gps[1,2]<0) +abs(gps[1,2]) else '- 0'`)^2
++(y `r if (gps[1,3]>0) - gps[1,3] else if (gps[1,3]<0) +abs(gps[1,3]) else '- 0'`)^2
++(z `r if (gps[1,4]>0) -gps[1,4] else if (gps[1,4]<0) +abs(gps[1,4]) else '- 0'`)^2
 &=
-v_c^2(t-103.538332)^2
+v_c^2(t-`r round(gps[1,5], digits = 6)`)^2
 \end{aligned}
 \]
 
-Si nous développons et réarrangons les termes pour que les variables linéaires soient à gauche du symbole d'égalité  (en utilisant le fait que $v_c \approx 0.047003$), nous obtenons:
+Si nous développons et réarrangons les termes pour que les variables linéaires soient à gauche du symbole d'égalité  (en utilisant le fait que $v_c \approx `r round(c, digits = 6)`$), nous obtenons:
 
+```{r creation-sel, echo = FALSE}
+A <- matrix(0, 3, 4)
+B <- matrix(0, 3, 1)
 
+for (i in (1:3)){
+  A[i, (1:3)] <- 2*(gps[i+1, (2:4)] - gps[1, (2:4)])
+  A[i, 4] <- -2*c^2*(gps[i+1, 5] - gps[1, 5])
+  B[i] <- sum(gps[(i+1), (2:4)]^2 - gps[1, (2:4)]^2)-c^2*(gps[(i+1), 5]^2 - gps[1, 5]^2)
+}
+
+R <- rref(A,B, verbose = FALSE, digits = 15)
+K <- R$A[, 4]
+L <- R$B
+
+xf <- gps[4, (2:4)]
+tf <- gps[4, 5]
+
+# Coefficient en t^2
+a <- sum(K^2)-c^2
+# Coefficient en t
+b <- sum(-2*(L-xf)*K)+2*c^2*tf
+# Coefficient constant
+c <- sum((L-xf)^2)-c^2*tf^2
+
+# Resolution de la quadratique
+delta <- b^2 - 4*a*c
+t1 <- (-b + sqrt(delta))/(2*a)
+t2 <- (-b - sqrt(delta))/(2*a)
+
+pos1 <- L - K*t1
+pos2 <- L - K*t2
+pos <- matrix(c(pos1, pos2), 2, 3, byrow = TRUE)
+colnames(pos) <- c("x", "y", "z")
+
+l1 <- norm(pos[1, ], "2")
+l2 <- norm(pos[2, ], "2")
+
+id <- which.min(c(abs(l1-1), abs(l2-1)))
+
+if (id == 1) final <- pos[1,] else final <- pos[2,]
+
+r <- norm(final, "2")
+latitude <- rad2deg(asin(final[3]/r))
+longitude <- rad2deg(atan2(final[2],final[1]))
+
+A <- round(A, digits = 6)
+B <- round(B, digits = 6)
+K <- round(K, digits = 6)
+L <- round(L, digits = 6)
+```
 
 \[
 \begin{aligned}
-4 x
-+ 0 y
-+4 z
--5.7376576636\times 10^{4} t
+`r if (gps[1,2]>=0) 2*gps[1,2] else -2*abs(gps[1,2])` x
+`r if (gps[1,3]>0) paste0("+",2*gps[1,3]) else if (gps[1,3]<0) -2*abs(gps[1,3]) else '+ 0'` y
+`r if (gps[1,4]>0) paste0("+",2*gps[1,4]) else if (gps[1,4]<0) -2*abs(gps[1,4]) else '+ 0'` z
+`r if (gps[1,5]>0) -round(2*gps[1,5]*c^2, digits = 6) else if (gps[1,5]<0) paste0("+",abs(round(2*gps[1,5]*c^2, digits = 6)))` t
 &=
--2.970329515432\times 10^{6}
+`r round(gps[1,2]^2+gps[1,3]^2+gps[1,4]^2-gps[1,5]^2*c^2, digits = 6)`
 +x^2+y^2+z^2-v_c^2 t^2
 \end{aligned}
 \]
@@ -160,26 +228,26 @@ Nous pouvons faire de même pour les trois autres satellites.
 
 \[
 \begin{aligned}
-6 x
--4 y
-+6 z
--3.9242822719\times 10^{4} t
+`r if (gps[2,2]>=0) 2*gps[2, 2] else -2*abs(gps[2, 2])` x
+`r if (gps[2,3]>0) paste0("+",2*gps[2, 3]) else if (gps[2, 3]<0) -2*abs(gps[2, 3]) else '+ 0'` y
+`r if (gps[2,4]>0) paste0("+",2*gps[2, 4]) else if (gps[2, 4]<0) -2*abs(gps[2, 4]) else '+ 0'` z
+`r if (gps[2,5]>0) -round(2*gps[2, 5]*c^2, digits = 6) else if (gps[2, 5]<0) paste0("+",abs(round(2*gps[2, 5]*c^2, digits = 6)))` t
 &=
--1.389473076184\times 10^{6}
+`r round(gps[2, 2]^2+gps[2, 3]^2+gps[2, 4]^2-gps[2, 5]^2*c^2, digits = 6)`
 +x^2+y^2+z^2-v_c^2 t^2 \\
-4 x
--2 y
--6 z
--3.5874790105\times 10^{4} t
+`r if (gps[3, 2]>=0) 2*gps[3,  2] else -2*abs(gps[3,  2])` x
+`r if (gps[3, 3]>0) paste0("+",2*gps[3,  3]) else if (gps[3,  3]<0) -2*abs(gps[3,  3]) else '+ 0'` y
+`r if (gps[3, 4]>0) paste0("+",2*gps[3,  4]) else if (gps[3,  4]<0) -2*abs(gps[3,  4]) else '+ 0'` z
+`r if (gps[3, 5]>0) -round(2*gps[3,  5]*c^2, digits = 6) else if (gps[3,  5]<0) paste0("+",abs(round(2*gps[3,  5]*c^2, digits = 6)))` t
 &=
--1.161208047207\times 10^{6}
+`r round(gps[3,  2]^2+gps[3,  3]^2+gps[3,  4]^2-gps[3,  5]^2*c^2, digits = 6)`
 +x^2+y^2+z^2-v_c^2 t^2 \\
-6 x
-+ 0 y
--4 z
--3.8030733412\times 10^{4} t
+`r if (gps[4, 2]>=0) 2*gps[4,  2] else -2*abs(gps[4,  2])` x
+`r if (gps[4, 3]>0) paste0("+",2*gps[4,  3]) else if (gps[4,  3]<0) -2*abs(gps[4,  3]) else '+ 0'` y
+`r if (gps[4, 4]>0) paste0("+",2*gps[4,  4]) else if (gps[4,  4]<0) -2*abs(gps[4,  4]) else '+ 0'` z
+`r if (gps[4, 5]>0) -round(2*gps[4,  5]*c^2, digits = 6) else if (gps[4,  5]<0) paste0("+",abs(round(2*gps[4,  5]*c^2, digits = 6)))` t
 &=
--1.304973252957\times 10^{6}
+`r round(gps[4,  2]^2+gps[4,  3]^2+gps[4,  4]^2-gps[4,  5]^2*c^2, digits = 6)`
 +x^2+y^2+z^2-v_c^2 t^2
 \end{aligned}
 \]
@@ -190,24 +258,24 @@ Remarquons que les termes quadratiques des quatre équations sont tous identique
 
 \[
 \begin{aligned}
-2 x
--4 y
-+2 z
-+0.14459 t
+`r A[1,1]` x
+`r if (A[1,2]>0) paste0("+",A[1,2]) else if (A[1,2]<0) paste0("-",abs(A[1,2])) else '+ 0'` y
+`r if (A[1,3]>0) paste0("+",A[1,3]) else if (A[1,3]<0) paste0("-",abs(A[1,3])) else '+ 0'` z
+`r if (A[1,4]>0) paste0("+",A[1,4]) else if (A[1,4]<0) paste0("-",abs(A[1,4])) else '+ 0'` t
 &=
-26.604883 \\
-0 x
--2 y
--10 z
-+0.171445 t
+`r B[1,1]` \\
+`r A[2,1]` x
+`r if (A[2,2]>0) paste0("+",A[2,2]) else if (A[2,2]<0) paste0("-",abs(A[2,2])) else '+ 0'` y
+`r if (A[2,3]>0) paste0("+",A[2,3]) else if (A[2,3]<0) paste0("-",abs(A[2,3])) else '+ 0'` z
+`r if (A[2,4]>0) paste0("+",A[2,4]) else if (A[2,4]<0) paste0("-",abs(A[2,4])) else '+ 0'` t
 &=
-20.425024 \\
-2 x
-+ 0 y
--8 z
-+0.154255 t
+`r B[2,1]` \\
+`r A[1,1]` x
+`r if (A[3,2]>0) paste0("+",A[3,2]) else if (A[3,2]<0) paste0("-",abs(A[3,2])) else '+ 0'` y
+`r if (A[3,3]>0) paste0("+",A[3,3]) else if (A[3,3]<0) paste0("-",abs(A[3,3])) else '+ 0'` z
+`r if (A[3,4]>0) paste0("+",A[3,4]) else if (A[3,4]<0) paste0("-",abs(A[3,4])) else '+ 0'` t
 &=
-18.278716
+`r B[3,1]`
 \end{aligned}
 \]
 
@@ -215,9 +283,9 @@ Nous avons donc obtenu un système d'équations linéaires de trois équations e
 
 \[
 \begin{aligned}
-x &= 0.03012t +4.802841 \\
-y &= -0.026963t -4.791865 \\
-z &= -0.011752t -1.084129
+x &= `r K[1]`t `r if (L[1]>0) paste0("+",L[1]) else if (L[1]<0) paste0("-",abs(L[1]))` \\
+y &= `r K[2]`t `r if (L[2]>0) paste0("+",L[2]) else if (L[2]<0) paste0("-",abs(L[2]))` \\
+z &= `r K[3]`t `r if (L[3]>0) paste0("+",L[3]) else if (L[3]<0) paste0("-",abs(L[3]))`
 \end{aligned}
 \]
 
@@ -225,11 +293,11 @@ Pour être en mesure de trouver la valeur du paramètre $t$, nous allons remplac
 
 \[
 \begin{aligned}
-(x-2)^2+(y-0)^2+(z-2)^2 &= v_c^2(t-103.538332)^2 \\
-(0.03012t +4.802841-2)^2
-+(-0.026963t -4.791865-0)^2
-+(-0.011752t -1.084129-2)^2 
-&= v_c^2(t-103.538332)^2 \\
+(x-`r gps[1,2]`)^2+(y-`r gps[1,3]`)^2+(z-`r gps[1,4]`)^2 &= v_c^2(t-`r round(gps[1,5], digits = 6)`)^2 \\
+(`r K[1]`t `r if (L[1]>0) paste0("+",L[1]) else if (L[1]<0) paste0("-",abs(L[1]))`-`r gps[1,2]`)^2
++(`r K[2]`t `r if (L[2]>0) paste0("+",L[2]) else if (L[2]<0) paste0("-",abs(L[2]))`-`r gps[1,3]`)^2
++(`r K[3]`t `r if (L[3]>0) paste0("+",L[3]) else if (L[3]<0) paste0("-",abs(L[3]))`-`r gps[1,4]`)^2 
+&= v_c^2(t-`r round(gps[1,5], digits = 6)`)^2 \\
 \end{aligned}
 \]
 
@@ -237,20 +305,18 @@ Nous pouvons résoudre l'équation quadratique précédente à l'aide de `Maxima
 
 \[
 \begin{aligned}
-t_1 &= -249.421146957767 \\
-t_2 &= 152.733718346294
+t_1 &= `r t1` \\
+t_2 &= `r t2`
 \end{aligned}
 \]
 
 En remplaçant dans les équations trouvées pour $x$, $y$ et $z$, nous obtenons deux positions possibles.
 
+```{r, echo=FALSE}
+kable(pos, align = "c", digits = 6)
+```
 
-     x            y             z     
------------  ------------  -----------
- 12.315401    -11.517106    -4.015282 
- 0.202504     -0.673646     0.710770  
-
-En calculant les normes des deux vecteurs, nous obtenons pour le premier 17.33307 et pour le second 1. Puisque la seconde est plus près de 1, le second vecteur correspond à la position de l'endroit où nous nous trouvons.
+En calculant les normes des deux vecteurs, nous obtenons pour le premier `r round(l1, digits = 6)` et pour le second `r round(l2, digits = 6)`. Puisque la `r if (id == 1) paste("première") else paste("seconde")` est plus près de 1, le `r if (id == 1) paste("premier") else paste("second")` vecteur correspond à la position de l'endroit où nous nous trouvons.
 
 Pour convertir ces coordonnées cartésiennes en coordonnées géodétiques, c'est-à-dire en latitude et longitude, nous devons utiliser les formules suivantes:
 
@@ -262,9 +328,13 @@ r &= \sqrt{x^2+y^2+z^2} \\
 \end{aligned}
 \]
 
-Nous nous trouvons donc à la latitude $45.297583^{\circ}$ et à la longitude $-73.26875^{\circ}$. En affichant cet endroit sur une carte, nous obtenons:
+Nous nous trouvons donc à la latitude $`r round(latitude, digits = 6)`^{\circ}$ et à la longitude $`r round(longitude, digits = 6)`^{\circ}$. En affichant cet endroit sur une carte, nous obtenons:
 
-<img src="skeleton_files/figure-html/ggmap-1.png" style="display: block; margin: auto;" />
+```{r ggmap, echo=FALSE, fig.height=5, fig.width=5, fig.align='center', message=FALSE}
+where <- c(longitude, latitude)
+ggmap(get_map(where, zoom = 15))+
+  geom_point(aes(x = longitude, y = latitude), col = "red", size = 3)
+```
 
 Nous sommes au cégep de Saint-Jean-sur-Richelieu.
 
@@ -276,7 +346,7 @@ Nous sommes au cégep de Saint-Jean-sur-Richelieu.
 
 ## Préalables
 
-1. Définir dans `Maxima` les constantes $c$, $R_t$ et $v_c$. Pour définir un élément dans `Maxima` effectuer la commande `:`. Par exemple, `c:299792458` ou `E:x^2-4=0`. **N'utilisez pas des valeurs arrondies pour ces constantes (par exemple $v_c \approx 0.047$) car vous n'obtiendrez pas la bonne localisation.
+1. Définir dans `Maxima` les constantes $c$, $R_t$ et $v_c$. Pour définir un élément dans `Maxima` effectuer la commande `:`. Par exemple, `c:299792458` ou `E:x^2-4=0`. **N'utilisez pas des valeurs arrondies pour ces constantes (par exemple $v_c \approx 0.047$) car vous n'obtiendrez pas la bonne localisation.**
 
 ## Questions sur les satellites
 

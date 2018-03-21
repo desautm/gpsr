@@ -40,7 +40,7 @@ creation_gps <- function(data,
   phimin <- acos((Rt+altitude)/Rs)
 
   # Creation des positions des 4 satellites
-  sat <- matrix(0, num_satellites, 3)
+  #sat <- matrix(0, num_satellites, 3)
   num_choix <- choose(n = num_satellites, k = 2) # Nombre de combinaisons de 2 satellites parmi num_satellites
   test <- logical(num_choix)
   D <- matrix(0, num_satellites-1, 3)
@@ -51,7 +51,16 @@ creation_gps <- function(data,
   while ((Matrix::rankMatrix(D) < 3) && (any(test == FALSE))){
 
     if (arrondi){
-      sat <- matrix(sample(-3:3, num_satellites*3, replace = TRUE), num_satellites, 3)
+      # sat <- matrix(sample(-3:3, num_satellites*3, replace = TRUE), num_satellites, 3)
+      # On peut choisir la position arrondie des satellites en sachant dans quel octant l'endroit se trouve.
+      # On peut donc s'assurer que les satellites sont visibles.
+      sat <- matrix(0, num_satellites, 3)
+      if (x >= 0) sat[(1:num_satellites), 1] <- matrix(sample(0:3, num_satellites), num_satellites, 1)
+      else sat[(1:num_satellites), 1] <- matrix(sample(-3:0, num_satellites), num_satellites, 1)
+      if (y >= 0) sat[(1:num_satellites), 2] <- matrix(sample(0:3, num_satellites), num_satellites, 1)
+      else sat[(1:num_satellites), 2] <- matrix(sample(-3:0, num_satellites), num_satellites, 1)
+      if (z >= 0) sat[(1:num_satellites), 3] <- matrix(sample(0:3, num_satellites), num_satellites, 1)
+      else sat[(1:num_satellites), 3] <- matrix(sample(-3:0, num_satellites), num_satellites, 1)
     }
     else{
       # On trouve les angles aleatoires des satellites
@@ -90,6 +99,7 @@ creation_gps <- function(data,
   if (arrondi) sat_rot <- sat # On ne fait pas de rotation si on veut des valeurs arrondies
   else {
     # Matrices de rotation
+    # On s'assure de cette façon que les satellites sont visibles
     Ry <- matrix(c(cos(latitude), 0, sin(latitude),
                    0, 1, 0,
                    -sin(latitude), 0, cos(latitude)), 3, 3, byrow = TRUE)
