@@ -20,8 +20,10 @@ creation_problemes <- function(N,
     sols[i] <- database[numero, ]$nom
   }
 
-  where_donnees <- paste0(.libPaths(),"/gpsr/rmarkdown/templates/docs-enseignants/donnees-etudiants.Rmd")
-  where_solutions <- paste0(.libPaths(),"/gpsr/rmarkdown/templates/docs-enseignants/solutions-enseignants.Rmd")
+  where_donnees <- paste0(.libPaths()[1],"/gpsr/rmarkdown/templates/docs-enseignants/donnees-etudiants.Rmd")
+  where_donnees <- system.file("rmarkdown","templates","docs-enseignants","donnees-etudiants.Rmd", package = "gpsr")
+  where_solutions <- paste0(.libPaths()[1],"/gpsr/rmarkdown/templates/docs-enseignants/solutions-enseignants.Rmd")
+  where_solutions <- system.file("rmarkdown","templates","docs-enseignants","solutions-enseignants.Rmd", package = "gpsr")
 
   if (output == "pdf"){
     rmarkdown::render(

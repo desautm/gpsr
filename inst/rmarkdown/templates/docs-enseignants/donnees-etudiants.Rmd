@@ -1,5 +1,5 @@
 ---
-title: "DonnÃ©es pour les Ã©tudiants"
+title: "Données pour les étudiants"
 html_document: 
     toc: yes
     toc_float: yes
