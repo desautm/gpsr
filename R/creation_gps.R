@@ -8,7 +8,6 @@
 #'   decimales plus proches de la realite.
 #' @return sat_final Une tibble dont les lignes representent les satellites et les colonnes les coordonnees spatiales et temporelles.
 #'   En coordonnees cartesiennes x, y et z, ainsi qu'en temps t.
-#' @importFrom Matrix rankMatrix
 #' @export
 
 creation_gps <- function(data,
