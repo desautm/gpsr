@@ -1,17 +1,22 @@
+#' Permet de creer deux documents Rmd pour les etudiants et les enseignants
+#'
+#' @param N Un nombre entier indiquant le nombre total de problemes a creer.
+#' @param database Une tibble contenant les endroits voulus.
+#' @param n_sat Le nombre de satellites a creer. La valeur par defaut est 4.
+#' @param arrondi Si \code{TRUE}, nous trouvons des positions de satellites entieres. Si \code{FALSE}, nous trouvons des positions
+#'   decimales plus proches de la realite.
+#' @return Deux documents Rmd
 #' @importFrom knitr spin
 #' @export
 creation_problemes <- function(N,
                          database,
                          n_sat = 4,
-                         arrondi = FALSE,
-                         output = c("pdf", "word", "html")){
+                         arrondi = FALSE){
 
   if (n_sat < 0) stop("Le nombre de satellites doit etre un entier positif.")
   if (!is.logical(arrondi)) stop("arrondi doit etre TRUE ou FALSE")
 
   options(digits = 15)
-
-  output <- match.arg(output, c("pdf", "word", "html"))
 
   all_sat <- lapply(1:N, function(x) matrix(0, n_sat, 5))
   sols <- character(length = N)
@@ -42,59 +47,21 @@ creation_problemes <- function(N,
               knit = TRUE,
               report = FALSE,
               format = c("Rmd"))
+  fConn <- file(paste0(getwd(),"/solutions-enseignants.md"))
+  Lines <- readLines(fConn)
+  text_begin <- paste0(c("---\n",
+                         "title: Solutions pour les enseignants\n",
+                         "output:\n",
+                         "  html_document:\n",
+                         "    toc: yes\n",
+                         "    toc_float: yes\n",
+                         "  pdf_document:\n",
+                         "    toc: yes\n",
+                         "---\n"), collapse = "")
+  writeLines(paste0(c(text_begin, Lines)),con = fConn)
+  close(fConn)
 
-  #where_donnees <- paste0(.libPaths()[1],"/gpsr/rmarkdown/templates/docs-enseignants/donnees-etudiants.Rmd")
-  where_donnees <- system.file("misc","donnees-etudiants.Rmd", package = "gpsr")
-  #where_solutions <- paste0(.libPaths()[1],"/gpsr/rmarkdown/templates/docs-enseignants/solutions-enseignants.Rmd")
-  where_solutions <- system.file("misc","solutions-enseignants.Rmd", package = "gpsr")
-
-  # if (output == "pdf"){
-  #   rmarkdown::render(
-  #     where_donnees,
-  #     output_format = "pdf_document",
-  #     output_dir = getwd()
-  #   )
-  #   rmarkdown::render(
-  #     where_solutions,
-  #     output_format = "pdf_document",
-  #     output_dir = getwd()
-  #   )
-  #   where_donnees_pdf <- paste0(getwd(),"/donnees-etudiants.pdf")
-  #   where_solutions_pdf <- paste0(getwd(),"/solutions-enseignants.pdf")
-  #   system(paste0('open "',where_donnees_pdf,'"'))
-  #   system(paste0('open "',where_solutions_pdf,'"'))
-  # }
-  # else if (output == "word"){
-  #   rmarkdown::render(
-  #     where_donnees,
-  #     output_format = "word_document",
-  #     output_dir = getwd()
-  #   )
-  #   rmarkdown::render(
-  #     where_solutions,
-  #     output_format = "word_document",
-  #     output_dir = getwd()
-  #   )
-  #   where_donnees_word <- paste0(getwd(),"/donnees-etudiants.docx")
-  #   where_solutions_word <- paste0(getwd(),"/solutions-enseignants.docx")
-  #   system(paste0('open "',where_donnees_word,'"'))
-  #   system(paste0('open "',where_solutions_word,'"'))
-  # }
-  # else if (output == "html"){
-  #   rmarkdown::render(
-  #     where_donnees,
-  #     output_format = "html_document",
-  #     output_dir = getwd()
-  #   )
-  #   rmarkdown::render(
-  #     where_solutions,
-  #     output_format = "html_document",
-  #     output_dir = getwd()
-  #   )
-  #   where_donnees_html <- paste0(getwd(),"/donnees-etudiants.html")
-  #   where_solutions_html <- paste0(getwd(),"/solutions-enseignants.html")
-  #   system(paste0('open "',where_donnees_html,'"'))
-  #   system(paste0('open "',where_solutions_html,'"'))
-  # }
+  file.rename(paste0(getwd(),"/donnees-etudiants.md"), paste0(getwd(),"/donnees-etudiants.Rmd"))
+  file.rename(paste0(getwd(),"/solutions-enseignants.md"), paste0(getwd(),"/solutions-enseignants.Rmd"))
 
 }
