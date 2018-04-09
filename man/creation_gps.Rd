@@ -10,12 +10,12 @@ creation_gps(data, num, num_satellites = 4, arrondi = FALSE)
 \item{data}{Une tibble contenant les positions des endroits sur terre. Le tibble contient le \code{nom},
 la \code{latitude} en degres, la \code{longitude} en degres et l'\code{altitude} en metres.}
 
+\item{num}{Le numero de l'endroit dont on veut trouver la position GPS.}
+
 \item{num_satellites}{Le nombre de satellites a creer. La valeur par defaut est 4.}
 
 \item{arrondi}{Si \code{TRUE}, nous trouvons des positions de satellites entieres. Si \code{FALSE}, nous trouvons des positions
 decimales plus proches de la realite.}
-
-\item{k}{Le numero de l'endroit dont on veut trouver la position GPS.}
 }
 \value{
 sat_final Une tibble dont les lignes representent les satellites et les colonnes les coordonnees spatiales et temporelles.

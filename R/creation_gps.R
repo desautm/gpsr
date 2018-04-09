@@ -2,12 +2,13 @@
 #'
 #' @param data Une tibble contenant les positions des endroits sur terre. Le tibble contient le \code{nom},
 #'   la \code{latitude} en degres, la \code{longitude} en degres et l'\code{altitude} en metres.
-#' @param k Le numero de l'endroit dont on veut trouver la position GPS.
+#' @param num Le numero de l'endroit dont on veut trouver la position GPS.
 #' @param num_satellites Le nombre de satellites a creer. La valeur par defaut est 4.
 #' @param arrondi Si \code{TRUE}, nous trouvons des positions de satellites entieres. Si \code{FALSE}, nous trouvons des positions
 #'   decimales plus proches de la realite.
 #' @return sat_final Une tibble dont les lignes representent les satellites et les colonnes les coordonnees spatiales et temporelles.
 #'   En coordonnees cartesiennes x, y et z, ainsi qu'en temps t.
+#' @importFrom Matrix rankMatrix
 #' @importFrom stats runif
 #' @export
 
@@ -64,8 +65,8 @@ creation_gps <- function(data,
     }
     else{
       # On trouve les angles aleatoires des satellites
-      lambda <- runif(num_satellites, min = -pi, max = pi)
-      phi <- runif(num_satellites, min = phimin, max = phimax)
+      lambda <- stats::runif(num_satellites, min = -pi, max = pi)
+      phi <- stats::runif(num_satellites, min = phimin, max = phimax)
 
       # Positions des satellites
       xsat <- (Rt+Rs)*cos(phi)*cos(lambda)

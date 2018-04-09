@@ -3,4 +3,6 @@
 export(creation_devoir)
 export(creation_gps)
 export(creation_problemes)
+importFrom(Matrix,rankMatrix)
+importFrom(knitr,spin)
 importFrom(stats,runif)

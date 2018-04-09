@@ -1,3 +1,4 @@
+#' @importFrom knitr spin
 #' @export
 creation_problemes <- function(N,
                          database,
@@ -27,7 +28,7 @@ creation_problemes <- function(N,
   fConn <- file(paste0(getwd(),"/donnees-etudiants.md"))
   Lines <- readLines(fConn)
   text_begin <- paste0(c("---\n",
-                         "title: Données pour les étudiants\n",
+                         "title: Donnees pour les etudiants\n",
                          "output:\n",
                          "  html_document:\n",
                          "    toc: yes\n",
