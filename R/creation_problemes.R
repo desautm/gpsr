@@ -6,7 +6,7 @@
 #' @param arrondi Si \code{TRUE}, nous trouvons des positions de satellites entieres. Si \code{FALSE}, nous trouvons des positions
 #'   decimales plus proches de la realite.
 #' @return Deux documents Rmd
-#' @importFrom knitr spin
+#' @importFrom ezknitr ezknitr
 #' @export
 creation_problemes <- function(N,
                          database,
@@ -26,11 +26,18 @@ creation_problemes <- function(N,
     sols[i] <- database[numero, ]$nom
   }
 
-  knitr::spin(system.file("misc","donnees-etudiants.R", package = "gpsr"),
-              knit = TRUE,
-              report = FALSE,
-              format = c("Rmd"))
-  fConn <- file(paste0(getwd(),"/donnees-etudiants.md"))
+  dir <- tcltk::tk_choose.dir(default = "", caption = "Choisissez un repertoire...")
+
+  ezknitr::ezspin(
+              file = system.file("misc","donnees-etudiants.R", package = "gpsr"),
+              out_dir = dir,
+              params = list('N'  = N, 'all_sat' = all_sat),
+              keep_html = FALSE,
+              keep_rmd = FALSE,
+              keep_md = TRUE
+              )
+
+  fConn <- file(paste0(dir,"/donnees-etudiants.md"))
   Lines <- readLines(fConn)
   text_begin <- paste0(c("---\n",
                          "title: Donnees pour les etudiants\n",
@@ -43,11 +50,17 @@ creation_problemes <- function(N,
                          "---\n"), collapse = "")
   writeLines(paste0(c(text_begin, Lines)),con = fConn)
   close(fConn)
-  knitr::spin(system.file("misc","solutions-enseignants.R", package = "gpsr"),
-              knit = TRUE,
-              report = FALSE,
-              format = c("Rmd"))
-  fConn <- file(paste0(getwd(),"/solutions-enseignants.md"))
+
+  ezknitr::ezspin(
+    file = system.file("misc","solutions-enseignants.R", package = "gpsr"),
+    out_dir = dir,
+    params = list('N'  = N, 'all_sat' = all_sat, 'sols' = sols),
+    keep_html = FALSE,
+    keep_rmd = FALSE,
+    keep_md = TRUE
+  )
+
+  fConn <- file(paste0(dir,"/solutions-enseignants.md"))
   Lines <- readLines(fConn)
   text_begin <- paste0(c("---\n",
                          "title: Solutions pour les enseignants\n",
@@ -61,7 +74,10 @@ creation_problemes <- function(N,
   writeLines(paste0(c(text_begin, Lines)),con = fConn)
   close(fConn)
 
-  file.rename(paste0(getwd(),"/donnees-etudiants.md"), paste0(getwd(),"/donnees-etudiants.Rmd"))
-  file.rename(paste0(getwd(),"/solutions-enseignants.md"), paste0(getwd(),"/solutions-enseignants.Rmd"))
+  testf1 <- file.rename(paste0(dir,"/donnees-etudiants.md"),paste0(dir,"/donnees-etudiants.Rmd"))
+  if (!testf1) message("Le fichier donnees-etudiants a eu un probleme de changement de nom.")
+
+  testf2 <- file.rename(paste0(dir,"/solutions-enseignants.md"),paste0(dir,"/solutions-enseignants.Rmd"))
+  if (!testf2) message("Le fichier solutions-enseignants a eu un probleme de changement de nom.")
 
 }

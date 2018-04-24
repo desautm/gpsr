@@ -1,1 +1,4 @@
 name: Introduction GPS
+description: >
+ Template pour le document d'introduction à donner aaux etudiants
+create_dir: true
