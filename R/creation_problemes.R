@@ -76,8 +76,10 @@ creation_problemes <- function(N,
 
   testf1 <- file.rename(paste0(dir,"/donnees-etudiants.md"),paste0(dir,"/donnees-etudiants.Rmd"))
   if (!testf1) message("Le fichier donnees-etudiants a eu un probleme de changement de nom.")
+  system(paste0('open "',dir,"/donnees-etudiants.Rmd",'"'))
 
   testf2 <- file.rename(paste0(dir,"/solutions-enseignants.md"),paste0(dir,"/solutions-enseignants.Rmd"))
   if (!testf2) message("Le fichier solutions-enseignants a eu un probleme de changement de nom.")
+  system(paste0('open "',dir,"/solutions-enseignants.Rmd",'"'))
 
 }
